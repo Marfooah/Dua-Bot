@@ -17,13 +17,16 @@ st.markdown(
     .main-container {max-width: 760px; margin: 0 auto;}
     .card {background: #fff; border-radius: 12px; box-shadow: 0 6px 18px rgba(16,24,40,0.08); padding: 18px; margin-top: 12px;}
     .arabic {font-size: 28px; font-weight: 600; direction: rtl; text-align: right; margin-bottom: 8px;}
-    .translation {font-size: 16px; color: #111827; margin-bottom: 6px;}
-    .source {font-size: 13px; color: #6b7280; margin-top: 8px;}
-    .small {font-size: 12px; color: #6b7280;}
+
+    /* FIXED COLORS FOR DARK MODE */
+    .translation {font-size: 16px; color: #ffffff !important; margin-bottom: 6px;}
+    .source {font-size: 13px; color: #e5e7eb !important; margin-top: 8px;}
+    .small {font-size: 12px; color: #e5e7eb !important;}
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 with st.container():
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
