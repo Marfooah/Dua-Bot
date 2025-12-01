@@ -121,9 +121,4 @@ with st.container():
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-            st.markdown(
-                "<div class='small'>Always verify references with a qualified scholar.</div>",
-                unsafe_allow_html=True
-            )
-
     st.markdown("</div>", unsafe_allow_html=True)
