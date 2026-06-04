@@ -96,10 +96,9 @@ Source Reference
 ```text
 dua-bot/
 │
+├── README.md
 ├── app.py
 ├── requirements.txt
-├── README.md
-└── assets/
 ```
 
 ---
