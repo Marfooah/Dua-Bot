@@ -5,6 +5,7 @@ An AI-powered Islamic assistant that provides authentic duas and Quranic ayat ba
 Whether you're feeling stressed, anxious, grateful, confused, or seeking guidance, Dua Bot helps you discover relevant supplications and verses along with their translation, explanation, and source.
 
 ---
+🚀 Live Demo: https://dua-bot.streamlit.app/
 
 ## 📸 Application Preview
 
