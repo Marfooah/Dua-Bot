@@ -1,72 +1,98 @@
 import os
 import json
-import traceback
 import streamlit as st
 from groq import Groq
 
 st.set_page_config(page_title="Dua Bot", page_icon="🕋", layout="centered")
 
-# ---------------- UI STYLING ----------------
-st.markdown(
-    """
-    <style>
-    .main-container {max-width: 760px; margin: 0 auto;}
-    .card {background: #fff; border-radius: 12px; box-shadow: 0 6px 18px rgba(16,24,40,0.08); padding: 18px; margin-top: 12px;}
-    .arabic {font-size: 28px; font-weight: 600; direction: rtl; text-align: right; margin-bottom: 8px;}
-    .translation {font-size: 16px; color: #ffffff !important; margin-bottom: 6px;}
-    .source {font-size: 13px; color: #e5e7eb !important; margin-top: 8px;}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# ---------------- UI ----------------
+st.markdown("""
+<style>
+.main-container {max-width: 760px; margin: auto;}
+.card {background: white; padding: 18px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.08);}
+.arabic {font-size: 28px; direction: rtl; text-align: right; font-weight: 600;}
+.translation {color: #111; font-size: 16px;}
+.source {color: gray; font-size: 13px;}
+</style>
+""", unsafe_allow_html=True)
 
 st.title("🕋 Dua Bot")
-st.markdown("AI-powered duas based on your emotional state.")
+st.markdown("AI-powered guidance for your heart.")
 
-# ---------------- API KEY ----------------
+# ---------------- API ----------------
 api_key = os.environ.get("GROQ_API_KEY")
-
 if not api_key:
-    st.error("Missing GROQ_API_KEY environment variable.")
+    st.error("Missing GROQ_API_KEY")
     st.stop()
 
 client = Groq(api_key=api_key)
 
+# ---------------- SAFE DUA DATABASE (NO AI ARABIC) ----------------
+DUA_DB = {
+    "stress": {
+        "arabic": "اللَّهُمَّ لا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا",
+        "source": "Hadith"
+    },
+    "anxiety": {
+        "arabic": "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+        "source": "Quran 13:28"
+    },
+    "sadness": {
+        "arabic": "إِنَّمَا أَشْكُو بَثِّي وَحُزْنِي إِلَى اللَّهِ",
+        "source": "Quran 12:86"
+    },
+    "fear": {
+        "arabic": "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+        "source": "Quran 3:173"
+    },
+    "gratitude": {
+        "arabic": "لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ",
+        "source": "Quran 14:7"
+    },
+    "guidance": {
+        "arabic": "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+        "source": "Quran 1:6"
+    },
+    "tawbah": {
+        "arabic": "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ",
+        "source": "Hadith"
+    },
+    "loneliness": {
+        "arabic": "اللَّهُمَّ أَنِسْ وَحْشَتِي",
+        "source": "General Dua"
+    }
+}
 # ---------------- INPUT ----------------
 mood_select = st.selectbox(
-    "Choose a situation",
+    "Choose your situation",
     ["Select...", "Stress", "Sadness", "Gratitude", "Exam Anxiety", "Illness",
      "Fear", "Anger", "Confusion", "Tawbah", "Guidance", "Loneliness"]
 )
 
 mood_text = st.text_input("Or describe your situation")
-
 submit = st.button("Get Dua 💫")
 
-# ---------------- PROMPT (FIXED) ----------------
+# ---------------- LLM PROMPT (NO ARABIC GENERATION) ----------------
 SYSTEM_PROMPT = """
-You are NOT allowed to generate Arabic text.
+You are an Islamic guidance classifier.
 
-You are an Islamic knowledge assistant.
+Classify the user's situation into ONLY one category:
 
-Return ONLY valid JSON with keys:
-arabic, translation, explanation, source
+stress, anxiety, sadness, fear, gratitude, guidance, tawbah, loneliness
 
-RULES:
-- Arabic MUST be a real authentic Quranic verse or authentic dua text
-- If unsure, return empty string for arabic
-- Do NOT invent Arabic words
-- Do NOT translate into Arabic
-- Output ONLY JSON, no extra text
+Return ONLY JSON:
+{
+  "category": "...",
+  "translation": "...",
+  "explanation": "..."
+}
+
+DO NOT generate Arabic.
+DO NOT add extra text.
 """
 
 # ---------------- HELPERS ----------------
-
-def is_valid_arabic(text: str) -> bool:
-    return bool(text) and any('\u0600' <= c <= '\u06FF' for c in text)
-
-
-def safe_json_parse(raw: str):
+def safe_json(raw):
     try:
         return json.loads(raw)
     except:
@@ -80,62 +106,44 @@ def safe_json_parse(raw: str):
             return None
 
 
-def call_groq(user_message: str, retries=1):
-    for _ in range(retries + 1):
-        try:
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message},
-                ],
-                temperature=0.3,
-            )
-
-            raw = completion.choices[0].message.content
-            data = safe_json_parse(raw)
-
-            if not data:
-                continue
-
-            # FIX: validate Arabic
-            if not is_valid_arabic(data.get("arabic", "")):
-                data["arabic"] = "⚠️ Authentic Arabic unavailable. Please retry."
-
-            return data
-
-        except Exception:
-            continue
-
-    return None
+def call_llm(msg):
+    res = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": msg},
+        ],
+        temperature=0.3,
+    )
+    return safe_json(res.choices[0].message.content)
 
 
-# ---------------- MAIN LOGIC ----------------
+# ---------------- MAIN ----------------
 if submit:
 
     user_mood = mood_text.strip() if mood_text.strip() else mood_select
 
     if not user_mood or user_mood == "Select...":
-        st.error("Please enter a valid mood or situation.")
+        st.error("Please enter a valid mood.")
         st.stop()
 
-    user_message = f"""
-Give an authentic dua or Quranic ayah for someone feeling: {user_mood}.
-Return JSON only.
-"""
-
-    with st.spinner("Finding comfort for your heart..."):
-        result = call_groq(user_message, retries=2)
+    result = call_llm(f"Classify this situation: {user_mood}")
 
     if not result:
-        st.error("Failed to generate a valid response. Please try again.")
+        st.error("Failed response. Try again.")
         st.stop()
+
+    category = result.get("category", "").lower()
+    dua = DUA_DB.get(category, {
+        "arabic": "اللَّهُمَّ اهْدِنِي وَارْزُقْنِي الطمأنينة",
+        "source": "General Dua"
+    })
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    st.markdown(f"<div class='arabic'>{result.get('arabic','')}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='translation'><b>Translation:</b> {result.get('translation','')}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='translation'><b>Explanation:</b> {result.get('explanation','')}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='source'><b>Source:</b> {result.get('source','')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='arabic'>{dua['arabic']}</div>", unsafe_allow_html=True)
+    st.markdown(f"<b>Translation:</b> {result.get('translation','')}", unsafe_allow_html=True)
+    st.markdown(f"<b>Explanation:</b> {result.get('explanation','')}", unsafe_allow_html=True)
+    st.markdown(f"<div class='source'><b>Source:</b> {dua['source']}</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
