@@ -1,13 +1,14 @@
-
-## 📸 Application Preview
-
-<img width="2876" height="1728" alt="image" src="https://github.com/user-attachments/assets/6e74ed31-79ef-4faf-ab03-7e32db79c19f" />
-
 # 🕋 Dua Bot
 
 An AI-powered Islamic assistant that provides authentic duas and Quranic ayat based on a user's emotional state or life situation.
 
 Whether you're feeling stressed, anxious, grateful, confused, or seeking guidance, Dua Bot helps you discover relevant supplications and verses along with their translation, explanation, and source.
+
+---
+
+## 📸 Application Preview
+
+<img width="2876" height="1728" alt="image" src="https://github.com/user-attachments/assets/6e74ed31-79ef-4faf-ab03-7e32db79c19f" />
 
 ---
 
